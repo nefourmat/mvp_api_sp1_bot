@@ -49,7 +49,8 @@ def main():
         try:
             new_homework = get_homeworks(current_timestamp)
             if new_homework.get('homeworks'):
-                send_message(parse_homework_status(new_homework.get('homeworks')[0]))
+                send_message(parse_homework_status(
+                    new_homework.get('homeworks')[0]))
             current_timestamp = new_homework.get('current_date')
             time.sleep(5 * 60)  # Опрашивать раз в пять минут
 
@@ -57,14 +58,16 @@ def main():
             print(f'Бот упал с ошибкой: {e}')
             time.sleep(5)
 
+
 logging.basicConfig(
     level=logging.DEBUG,
-    filename='program.log', 
+    filename='program.log',
     format='%(asctime)s, %(levelname)s, %(message)s, %(name)s'
 )
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-handler = RotatingFileHandler('my_logger.log', maxBytes=50000000, backupCount=5)
+handler = RotatingFileHandler(
+    'my_logger.log', maxBytes=50000000, backupCount=5)
 logger.addHandler(handler)
 
 
