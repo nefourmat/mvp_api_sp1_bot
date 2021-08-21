@@ -49,6 +49,7 @@ def main():
 
     while True:
         try:
+            send_message('Запущено отслеживание обновлений ревью')
             new_homework = get_homeworks(current_timestamp)
             if new_homework.get('homeworks'):
                 send_message(parse_homework_status(
@@ -69,5 +70,4 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 if __name__ == '__main__':
-    #main()
-    send_message('Запущено отслеживание обновлений ревью')
+    main()
