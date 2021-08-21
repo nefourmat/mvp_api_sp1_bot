@@ -19,11 +19,10 @@ ANSWER = 'Практикум вернул неожиданный ответ: {ho
 STATUS = 'Непредвиденный статус работы: {homework_status}'
 HEADERS = {'Authorization': f'OAuth {PRAKTIKUM_TOKEN}'}
 
-# проинициализация бота
+# инициализация бота
 bot = Bot(os.getenv('TELEGRAM_TOKEN'))
 
 
-#  взята ли ваша домашка в ревью, провалена или принята
 def parse_homework_status(homework):
     name = homework['homework_name']
     if name is None:
@@ -77,11 +76,11 @@ def main():
 
 if __name__ == '__main__':
     main()
-
 logging.basicConfig(
-    level='DEBUG',
-    filename=os.path.expanduser(~__file__ + '.log'),
+    level=logging.DEBUG,
+    filename=__file__ + '.log',
     format='%(asctime)s, %(levelname)s, %(message)s, %(name)s'
 )
 logger = logging.getLogger()
-logging.getLogger('urllib3').setLevel('CRITICAL')  # исключаем requests
+# исключаем requests
+logging.getLogger('urllib3').setLevel('CRITICAL')
