@@ -1,9 +1,8 @@
+import logging
 import os
 import time
-import logging
-import requests
 
-from logging.handlers import RotatingFileHandler
+import requests
 from dotenv import load_dotenv
 from telegram import Bot
 
@@ -12,21 +11,24 @@ load_dotenv()
 PRAKTIKUM_TOKEN = os.getenv('PRAKTIKUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
-TIME_UNIX = 0
 URL = 'https://praktikum.yandex.ru/api/user_api/homework_statuses/'
+CHECK_WORK = 'У вас проверили работу "{homework_name}"!\n\n{verdict}'
+APPROVED = 'Ревьюеру всё понравилось, работа зачтена!'
+FIND_ERRORS = 'К сожалению, в работе нашлись ошибки.'
 
 # проинициализация бота
 bot = Bot(os.getenv('TELEGRAM_TOKEN'))
 
 
+#  взята ли ваша домашка в ревью, провалена или принята
 def parse_homework_status(homework):
     homework_name = homework['homework_name']
     homework_status = homework['status']
     if homework_status == 'rejected':
-        verdict = 'К сожалению, в работе нашлись ошибки.'
-    else:
-        verdict = 'Ревьюеру всё понравилось, работа зачтена!'
-    return f'У вас проверили работу "{homework_name}"!\n\n{verdict}'
+        return FIND_ERRORS
+    if homework_status == 'approved':
+        verdict = APPROVED
+    return CHECK_WORK.format(homework_name=homework_name, verdict=verdict)
 
 
 def get_homeworks(current_timestamp):
@@ -52,24 +54,19 @@ def main():
                 send_message(parse_homework_status(
                     new_homework.get('homeworks')[0]))
             current_timestamp = new_homework.get('current_date')
-            time.sleep(5 * 60)  # Опрашивать раз в пять минут
+            time.sleep(20 * 60)  # Опрашивать раз в пять минут
 
-        except Exception as e:
-            print(f'Бот упал с ошибкой: {e}')
-            time.sleep(5)
+        except Exception:
+            logger.debug(f'Бот упал с ошибкой: {Exception}')
+            time.sleep(20 * 60)
 
 
 logging.basicConfig(
-    level=logging.DEBUG,
-    filename='program.log',
+    level='DEBUG',
+    filename=__file__ + '.log',
     format='%(asctime)s, %(levelname)s, %(message)s, %(name)s'
 )
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-handler = RotatingFileHandler(
-    'my_logger.log', maxBytes=50000000, backupCount=5)
-logger.addHandler(handler)
-
+logger = logging.getLogger()
 
 if __name__ == '__main__':
     main()
