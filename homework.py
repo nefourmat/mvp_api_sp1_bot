@@ -69,4 +69,5 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 if __name__ == '__main__':
-    main()
+    #main()
+    send_message('Запущено отслеживание обновлений ревью')
