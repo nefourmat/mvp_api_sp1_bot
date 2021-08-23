@@ -60,13 +60,14 @@ def get_homeworks(current_timestamp):
     except Exception as error:
         logging.exception(f'error {error}')
         raise ValueError(
-            REQUEST_ERROR_MESSAGE.format(exception=error)
+            REQUEST_ERROR_MESSAGE.format(exception=error, **data.strip())
         )
     reply = response.json()
     key_words = ['error', 'code']
     for key in key_words:
         if key in reply:
-            raise ValueError(JSON_ERROR_MESSAGE.format(error=reply[key]))
+            raise ValueError(
+                JSON_ERROR_MESSAGE.format(error=reply[key], **data.strip()))
     return reply
 
 
