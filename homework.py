@@ -13,42 +13,61 @@ TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 URL = 'https://praktikum.yandex.ru/api/user_api/homework_statuses/'
 CHECK_WORK = 'У вас проверили работу "{homework_name}"!\n\n{verdict}'
+GOT_WORK = 'Работа {homework_name} взята в ревью'
 APPROVED = 'Ревьюеру всё понравилось, работа зачтена!'
 FIND_ERRORS = 'К сожалению, в работе нашлись ошибки.'
-ANSWER = 'Практикум вернул неожиданный ответ: {homework_name}'
-STATUS = 'Непредвиденный статус работы: {homework_status}'
+ANSWER = 'Практикум вернул неожиданный ответ: {unknown}'
+WRONG = 'Неизвестный статус работы {unknown}'
 HEADERS = {'Authorization': f'OAuth {PRAKTIKUM_TOKEN}'}
-
+VALUES = {
+    'approved': APPROVED,
+    'rejected': FIND_ERRORS,
+    'reviewing': GOT_WORK
+}
+REQUEST_ERROR_MESSAGE = '''
+    Получить ответ от Практикума не удалось.
+    {url}
+    Заголовок запроса: {headers}
+    Параметры запроса: {params}
+    {exception}
+    '''
+JSON_ERROR_MESSAGE = 'Ошибка {error}'
+BOT_ERROR_MESSAGE = 'Бот столкнулся с ошибкой: {found_error}'
 # инициализация бота
 bot = Bot(os.getenv('TELEGRAM_TOKEN'))
+# получаем сообщение после корректного деплоя
+bot.send_message(
+    chat_id=CHAT_ID, text='Запущено отслеживание обновлений ревью')
 
 
 def parse_homework_status(homework):
     name = homework['homework_name']
-    if name is None:
-        logging.error(ANSWER.format(homework_name=name))
     homework_status = homework['status']
-    if homework_status not in ('approved', 'rejected'):
-        logging.error(ANSWER.format(homework_status=homework_status))
-    if homework_status == 'rejected':
-        return CHECK_WORK.format(homework_name=name, verdict=FIND_ERRORS)
-    if homework_status == 'approved':
-        return CHECK_WORK.format(homework_name=name, verdict=APPROVED)
-    return CHECK_WORK.format(homework_name=name)
+    if homework_status not in VALUES:
+        raise ValueError(WRONG.format(unknown=name))
+    return CHECK_WORK.format(
+        homework_name=name, verdict=VALUES[homework_status])
 
 
 def get_homeworks(current_timestamp):
-    if current_timestamp is None:
-        current_timestamp = int(time.time())
     data = {
-        'from_date': current_timestamp
+        'url': URL,
+        'params': {'from_date': current_timestamp},
+        'headers': HEADERS
     }
     try:
-        homework_statuses = requests.get(url=URL, headers=HEADERS, params=data)
-        return homework_statuses.json()
-    except Exception:
-        logging.exception(f'error {Exception}')
-        return {}
+        response = requests.get(**data)
+    except Exception as error:
+        logging.exception(f'error {error}')
+        raise ValueError(
+            REQUEST_ERROR_MESSAGE.format(exception=error)
+        )
+    reply = response.json()
+    key_words = ['error', 'code']
+    for key in key_words:
+        if key in reply:
+            raise ValueError(JSON_ERROR_MESSAGE.format(error=reply[key]))
+    return reply
 
 
 def send_message(message):
@@ -57,7 +76,6 @@ def send_message(message):
 
 def main():
     current_timestamp = int(time.time())  # Начальное значение timestamp
-    send_message('Запущено отслеживание обновлений ревью')
 
     while True:
         try:
@@ -66,21 +84,22 @@ def main():
                 send_message(parse_homework_status(
                     new_homework.get('homeworks')[0]))
             # обновить timestamp
-            current_timestamp = new_homework.get('current_date')
+            current_timestamp = new_homework.get(
+                'current_date', current_timestamp)
             time.sleep(20 * 60)  # Опрашивать раз в 20 минут
 
-        except Exception:
-            logger.debug(f'Бот упал с ошибкой: {Exception}')
+        except Exception as error:
+            logger.debug(BOT_ERROR_MESSAGE.format(found_error=error))
             time.sleep(20 * 60)
 
 
 if __name__ == '__main__':
+    logging.basicConfig(
+        level=logging.DEBUG,
+        filename=__file__ + '.log',
+        format='%(asctime)s, %(levelname)s, %(message)s, %(name)s'
+    )
+    logger = logging.getLogger()
+    # исключаем requests
+    logging.getLogger('urllib3').setLevel('CRITICAL')
     main()
-logging.basicConfig(
-    level=logging.DEBUG,
-    filename=__file__ + '.log',
-    format='%(asctime)s, %(levelname)s, %(message)s, %(name)s'
-)
-logger = logging.getLogger()
-# исключаем requests
-logging.getLogger('urllib3').setLevel('CRITICAL')
