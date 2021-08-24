@@ -43,6 +43,10 @@ bot = Bot(os.getenv('TELEGRAM_TOKEN'))
 # получаем сообщение после корректного деплоя
 
 
+class ServerErrorException(Exception):
+    pass
+
+
 def parse_homework_status(homework):
     name = homework['homework_name']
     homework_status = homework['status']
@@ -50,10 +54,6 @@ def parse_homework_status(homework):
         raise ValueError(WRONG.format(unknown=homework_status))
     return CHECK_WORK.format(
         homework_name=name, verdict=VERDICTS[homework_status])
-
-
-class ServerErrorException(Exception):
-    pass
 
 
 def get_homeworks(current_timestamp):
@@ -85,7 +85,6 @@ def send_message(message):
 
 def main():
     current_timestamp = int(time.time())  # Начальное значение timestamp
-
     while True:
         try:
             new_homework = get_homeworks(current_timestamp)
@@ -96,13 +95,11 @@ def main():
             current_timestamp = new_homework.get(
                 'current_date', current_timestamp)
             time.sleep(20 * 60)  # Опрашивать раз в 20 минут
-
         except Exception as error:
             logging.getLogger()(BOT_ERROR_MESSAGE.format(error=error))
             time.sleep(20 * 60)
         finally:
-            bot.send_message(
-                chat_id=CHAT_ID, text=START_MESSAGE)
+            send_message(START_MESSAGE)
 
 
 if __name__ == '__main__':
