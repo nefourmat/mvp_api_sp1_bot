@@ -98,8 +98,6 @@ def main():
         except Exception as error:
             logging.getLogger()(BOT_ERROR_MESSAGE.format(error=error))
             time.sleep(20 * 60)
-        finally:
-            send_message(START_MESSAGE)
 
 
 if __name__ == '__main__':
