@@ -37,7 +37,6 @@ JSON_ERROR_MESSAGE = '''
     Параметры запроса: {params}
     '''.strip()
 BOT_ERROR_MESSAGE = 'Бот столкнулся с ошибкой: {error}'
-START_MESSAGE = 'Запущено отслеживание обновлений ревью'
 # инициализация бота
 bot = Bot(os.getenv('TELEGRAM_TOKEN'))
 # получаем сообщение после корректного деплоя
@@ -96,7 +95,7 @@ def main():
                 'current_date', current_timestamp)
             time.sleep(20 * 60)  # Опрашивать раз в 20 минут
         except Exception as error:
-            logging.getLogger()(BOT_ERROR_MESSAGE.format(error=error))
+            logging.debug(BOT_ERROR_MESSAGE.format(error=error), exc_info=True)
             time.sleep(20 * 60)
 
 
@@ -106,7 +105,6 @@ if __name__ == '__main__':
         filename=__file__ + '.log',
         format='%(asctime)s, %(levelname)s, %(message)s, %(name)s'
     )
-    logger = logging.getLogger()
     # исключаем requests
     logging.getLogger('urllib3').setLevel('CRITICAL')
     main()
