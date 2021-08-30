@@ -93,10 +93,10 @@ def main():
             # обновить timestamp
             current_timestamp = new_homework.get(
                 'current_date', current_timestamp)
-            time.sleep(20 * 60)  # Опрашивать раз в 20 минут
+            time.sleep(1 * 60)  # Опрашивать раз в 1 минуту
         except Exception as error:
             logging.debug(BOT_ERROR_MESSAGE.format(error=error), exc_info=True)
-            time.sleep(20 * 60)
+            time.sleep(1 * 60)
 
 
 if __name__ == '__main__':
